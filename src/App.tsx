@@ -17,6 +17,13 @@ import {
   OffLayoutArea,
 } from "components/layout";
 
+import { PermifyClient } from "@permify/permify-service-js";
+
+const permify = new PermifyClient({
+  workspace_id: "workspace_id",
+  public_key: 'public_token'
+})
+
 function App() {
   return (
     <Refine
@@ -25,6 +32,20 @@ function App() {
       catchAll={<ErrorComponent />}
       routerProvider={routerProvider}
       dataProvider={dataProvider("https://api.fake-rest.refine.dev")}
+      accessControlProvider={{
+        can: async ({ resource, action, params }) => {
+          if (action === "delete" || action === "edit" || action === "show") {
+            return Promise.resolve({
+              // isAuthorized(userId, policyName, actionAlias, resourceId?, resourceType?)
+              can: await permify.isAuthorized("logged_user_id", resource, action, params.id.toString(), resource)
+            });
+          } 
+
+          return Promise.resolve({
+            can: await permify.isAuthorized("logged_user_id", resource, action)
+          });
+        },
+      }}
       resources={[
         {
           name: "posts",
