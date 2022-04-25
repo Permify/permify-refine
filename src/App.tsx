@@ -17,6 +17,10 @@ import {
   OffLayoutArea,
 } from "components/layout";
 
+//users data
+import users from "./data/users.json";
+
+//permify client
 import { PermifyClient } from "@permify/permify-service-js";
 
 const permify = new PermifyClient({
@@ -25,6 +29,10 @@ const permify = new PermifyClient({
 })
 
 function App() {
+  const role = localStorage.getItem("role")
+  const user = users.find(user => user.roles[0].guard_name === role) ?? users[0]   
+ 
+  console.log("role_user", user);
   return (
     <Refine
       notificationProvider={notificationProvider}
@@ -37,12 +45,12 @@ function App() {
           if (action === "delete" || action === "edit" || action === "show") {
             return Promise.resolve({
               // isAuthorized(userId, policyName, actionAlias, resourceId?, resourceType?)
-              can: await permify.isAuthorized("logged_user_id", resource, action, params.id.toString(), resource)
+              can: await permify.isAuthorized(user.id, resource, action, params.id.toString(), resource)
             });
-          } 
+          }
 
           return Promise.resolve({
-            can: await permify.isAuthorized("logged_user_id", resource, action)
+            can: await permify.isAuthorized(user.id, resource, action)
           });
         },
       }}
@@ -56,7 +64,7 @@ function App() {
         },
       ]}
       Title={Title}
-      Header={Header}
+      Header={() => <Header role={user.roles[0].guard_name} />}
       Sider={Sider}
       Footer={Footer}
       Layout={Layout}
